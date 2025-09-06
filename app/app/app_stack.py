@@ -5,6 +5,7 @@ from aws_cdk import (
     aws_dynamodb as dynamodb,
     aws_lambda as lambda_,
     aws_apigateway as apigw, Duration, SecretValue,
+    aws_iam as iam
 )
 from aws_cdk import aws_secretsmanager as secretsmanager
 from constructs import Construct
@@ -157,6 +158,11 @@ class AppStack(Stack):
         firmware_bucket.grant_read_write(finalize_upload_lambda)
         metadata_table.grant_write_data(finalize_upload_lambda)
         private_key_secret.grant_read(finalize_upload_lambda)
+        finalize_upload_lambda.add_to_role_policy(iam.PolicyStatement(
+            actions=["iot:Publish"],
+            resources=["*"]
+        ))
+
 
         generate_url_resource = api.root.add_resource("generate-upload-url")
         generate_url_resource.add_method("POST", apigw.LambdaIntegration(generate_url_lambda))

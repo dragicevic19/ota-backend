@@ -13,6 +13,8 @@ PRIVATE_KEY_SECRET_ARN = os.environ.get('PRIVATE_KEY_SECRET_ARN')
 s3_client = boto3.client('s3')
 dynamodb = boto3.resource('dynamodb')
 secrets_manager = boto3.client('secretsmanager')
+iot_client = boto3.client('iot-data')
+
 table = dynamodb.Table(TABLE_NAME)
 
 
@@ -75,6 +77,12 @@ def main(event, context):
                 ':rn': version_item['release_notes']
             }
         )
+
+        topic = f"ota/{device_type}/{group}/notify"
+        payload = json.dumps({'version': version})
+
+        print(f"Sending MQTT message in topic: {topic}")
+        iot_client.publish(topic=topic, qos=1, payload=payload)
 
         return {
             'statusCode': 200,
